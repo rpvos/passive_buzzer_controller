@@ -1,0 +1,27 @@
+menu "HTTP controller"
+
+    config ESP_WIFI_SSID
+        string "WiFi SSID"
+        default "BuzzerController"
+        help
+            SSID (network name)
+
+    config ESP_WIFI_PASSWORD
+        string "WiFi Password"
+        default "password"
+        help
+            WiFi password (WPA or WPA2), password has to be larger then 8 characters
+
+    config ESP_WIFI_CHANNEL
+        int "WiFi Channel"
+        range 1 13
+        default 1
+        help
+            WiFi channel (network channel)
+
+    config ESP_MAX_STA_CONN
+        int "Maximal STA connections"
+        default 4
+        help
+            Max number of the connected clients to acces point
+endmenu

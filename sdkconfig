@@ -1010,6 +1010,15 @@ CONFIG_WAVEFORM_SINE=y
 # CONFIG_WAVEFORM_SQUARE is not set
 # CONFIG_LOG_VOLTAGE is not set
 # end of Buzzer controller
+
+#
+# HTTP controller
+#
+CONFIG_ESP_WIFI_SSID="BuzzerController"
+CONFIG_ESP_WIFI_PASSWORD="password"
+CONFIG_ESP_WIFI_CHANNEL=1
+CONFIG_ESP_MAX_STA_CONN=4
+# end of HTTP controller
 # end of Component config
 
 #

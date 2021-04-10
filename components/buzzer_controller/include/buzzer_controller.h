@@ -4,5 +4,5 @@
 void buzzer_init();
 void set_frequency(int frequency);
 
-#endif 
+#endif // buzzer controller
 

@@ -1,10 +1,8 @@
-# Passive buzzer
+# Passive buzzer via http
 
-This component implements functions to make surtain tones and music via bluetooth.
+This project implements a http server where you can edit the tone of the passive buzzer.
 
-This component uses the classic bluetooth on the esp32 and the dac and timer drivers from esp-idf.
-
-## How to use this component
+## How to use this project
 
 ### Hardware Required
 
@@ -16,7 +14,7 @@ This component uses the classic bluetooth on the esp32 and the dac and timer dri
 Make sure DAC output pin which is GPIO25 if channel 1 set, GPIO26 if channel 2 set, is connected to the passive buzzer correctly.
 
 ### Configure the project
-To get this component working you have to change a few settings.
+To get this project working you have to change a few settings.
 
 Execute following statements in terminal:
 
@@ -24,20 +22,19 @@ Execute following statements in terminal:
 idf.py menuconfig
 ```
 
-Follow the steps to enable bluetooth.
-In `Component config` go to `Bluetooth`.
-Enable bluetooth by pressing enter.
+Go to 
+```
+Component config
+```
 
-Then go to `Bluetooth controller` and then `Bluetooth controller mode`.
-Here you would want to enable `BR/EDR Only`.
+Here at the bottom you can find the 
+```
+Http controller
+```
 
-Then go back to the page where you enabled bluetooth.
-Here go to `Bluedroid Options` and enable the following in order.
-`Classic Bluetooth` 
-`SPP`
-.
+Here you have to set the ssid and the password to your network via whom we connect.
 
-If you want to change other settings you can do that in the root menuconfig. here go to `Example  Configuration`.
+If you want to change other settings you can do that in the ```Component config```. here go to ```Example  Configuration```.
 In the following page are all the settings that are changeable in this project.
 
 #### DAC channel Num (Buzzer)
