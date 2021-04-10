@@ -1,38 +1,38 @@
-menu "Example Configuration"
+menu "Buzzer controller"
 
-    choice EXAMPLE_DAC_CHANNEL
+    choice DAC_CHANNEL
         bool "DAC Channel Num"
-        default EXAMPLE_DAC_CHANNEL_1
+        default DAC_CHANNEL_1
         help
             Select DAC channel used by the wave generator.
 
-        config EXAMPLE_DAC_CHANNEL_1
+        config DAC_CHANNEL_1
             bool "DAC Channel 1 (GPIO25)"
-        config EXAMPLE_DAC_CHANNEL_2
+        config DAC_CHANNEL_2
             bool "DAC Channel 2 (GPIO26)"
     endchoice
 
-    config EXAMPLE_DAC_CHANNEL
+    config DAC_CHANNEL
         int
-        default 0 if EXAMPLE_DAC_CHANNEL_1
-        default 1 if EXAMPLE_DAC_CHANNEL_2
+        default 0 if DAC_CHANNEL_1
+        default 1 if DAC_CHANNEL_2
 
-    choice EXAMPLE_WAVEFORM
+    choice WAVEFORM
         bool "Waveform"
-        default EXAMPLE_WAVEFORM_SINE
+        default WAVEFORM_SINE
         help
             Select waveform
-        config EXAMPLE_WAVEFORM_SINE
+        config WAVEFORM_SINE
             bool "Sine selected"
-        config EXAMPLE_WAVEFORM_TRIANGLE
+        config WAVEFORM_TRIANGLE
             bool "Triangle selected"
-        config EXAMPLE_WAVEFORM_SAWTOOTH
+        config WAVEFORM_SAWTOOTH
             bool "Sawtooth selected"
-        config EXAMPLE_WAVEFORM_SQUARE
+        config WAVEFORM_SQUARE
             bool "Square selected"
     endchoice
 
-    config EXAMPLE_LOG_VOLTAGE
+    config LOG_VOLTAGE
         bool "Enable output voltage log"
         default n
         help

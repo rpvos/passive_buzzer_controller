@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "buzzer_controller.h": "c"
+    }
+}

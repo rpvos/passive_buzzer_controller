@@ -6,4 +6,3 @@
 PROJECT_NAME := passive_buzzer_control
 
 include $(IDF_PATH)/make/project.mk
-
