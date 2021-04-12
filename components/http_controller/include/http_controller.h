@@ -1,9 +1,10 @@
 #if !defined(http_controller)
 #define http_controller
 
-int get_http_frequency();
-void set_http_frequency(int value);
+// Method to initialize the server
 void http_controller_init();
+// Method to set the callback
+void set_frequency_callback(void (*cb)(int));
 
 #endif // http_controller
 

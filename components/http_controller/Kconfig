@@ -12,6 +12,13 @@ menu "HTTP controller"
         help
             WiFi password (WPA or WPA2), password has to be larger then 8 characters
 
+    config ESP_WIFI_PORT
+        int "WiFi port"
+        range 1 10000
+        default 3500
+        help 
+            Port on which to acces the frequency changer
+
     config ESP_WIFI_CHANNEL
         int "WiFi Channel"
         range 1 13

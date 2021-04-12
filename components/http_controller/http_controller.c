@@ -12,62 +12,105 @@
 #include "nvs_flash.h"
 #include "esp_http_server.h"
 
-#define SERVER_PORT 3500
+// Lowest hertz the buzzer can handle
+#define BASE_HERTZ 1000
+
+// Base http request link
+// Can be set to /test to make the acces point ip:port/test
 #define URI_STRING "/"
 
+// Settings from the config file
 #define ESP_WIFI_SSID CONFIG_ESP_WIFI_SSID
 #define ESP_WIFI_PASS CONFIG_ESP_WIFI_PASSWORD
+#define SERVER_PORT CONFIG_ESP_WIFI_PORT
 #define ESP_WIFI_CHANNEL CONFIG_ESP_WIFI_CHANNEL
 #define MAX_STA_CONN CONFIG_ESP_MAX_STA_CONN
 
+// Tag for logging
 static const char *TAG = "http controller";
-int frequency = 1000; // base hertz
 
+// Global varible to know the frequency on the webpage
+int frequency = BASE_HERTZ;
+
+// Callback method
+void (*set_frequency_cb)(int);
+
+// Instance of the http server
 static httpd_handle_t httpServerInstance = NULL;
 
-int get_http_frequency(){
-    if (frequency>1000)
-    {
-        return frequency;
-    }else{
-        return 1000;
-    }
+// Setter for the callback
+void set_frequency_callback(void (*cb)(int))
+{
+    set_frequency_cb = cb;
 }
 
-void set_http_frequency(int value){
-    frequency = value;
-}
-
+// Handler made to handle the following link ip:port/uri_string
 static esp_err_t getHandler(httpd_req_t *httpRequest)
 {
-    ESP_LOGI(TAG, "Get handler called");
+    ESP_LOGI(TAG, "Frequency setter webpage called");
 
-    char * uri = httpRequest->uri;
+    // Var where the extra headers are stored
+    char *uri = httpRequest->uri;
+
+    // Variables how long the webpage components are
+    int uri_length = strlen(URI_STRING);
+    int base_header_length = strlen("?frequency=");
+
     // Header contains info on new frequency level
-    if (strlen(uri)>strlen("/?frequency="))
+    if (strlen(uri) > uri_length + base_header_length)
     {
-        int pre_digit_length = strlen("/?frequency=");
-        int digit_length = strlen(uri)-pre_digit_length;
-        char value[digit_length+1];
+        // Calculate how many digits are there to read
+        int digit_length = strlen(uri) - base_header_length;
+        // Initiate the array to store them with space for a null byte
+        char value[digit_length + 1];
+        // Loop through all the digits
         for (int character = 0; character < digit_length; character++)
         {
-            value[character] = uri[pre_digit_length+character];
+            value[character] = uri[base_header_length + character];
         }
+
+        // End the char array with \0 to make it a string
         value[digit_length] = '\0';
+
+        // Use atoi to convert a string to a integer
         frequency = atoi(value);
+
+        // If the frequency is smaller then the lowest posible hertz
+        if (frequency < BASE_HERTZ)
+        {
+            // Set the frequency to the lowest posible hertz
+            frequency = BASE_HERTZ;
+        }
+
+        // Use the callback to set the frequency
+        set_frequency_cb(frequency);
     }
-    
 
+    // Respond to the request with a html page without the frequency
     char html[] = "<html><body> <form action=\"\" method=\"get\"> <input type=\"number\" id=\"frequency\" name=\"frequency\" value=\"%d\" /> <input type=\"submit\" value=\"Send\" /> </form></body></html>\r\n\r\n";
-    char buffer[strlen(html)+1];
-    sprintf(buffer,html,frequency);  
+    
+    // Count the amount of digits used in the html page, 
+    // it is initiated at -2 because the %d is two characters that are already in this string
+    int count = -2;
+    int counter = frequency;
+    while (counter != 0) {
+        counter /= 10;
+        count++;
+    }
 
+    // Initiate a buffer to put the html page in containing the frequency
+    char buffer[strlen(html) + 1+ count];
+    // Copy the html into the buffer with the %d swapped for the frequency
+    sprintf(buffer, html, frequency);
+
+    // Send the page to the requester
     httpd_resp_send(httpRequest, buffer, strlen(buffer));
 
+    // Return ESP_OK
     return ESP_OK;
 }
 
-
+// Struct that contains the info about the webpage
 static httpd_uri_t getUri = {
     .uri = URI_STRING,
     .method = HTTP_GET,
@@ -75,6 +118,7 @@ static httpd_uri_t getUri = {
     .user_ctx = NULL,
 };
 
+// Function to start the server
 static void startHttpServer(void)
 {
     httpd_config_t httpServerConfiguration = HTTPD_DEFAULT_CONFIG();
@@ -85,6 +129,7 @@ static void startHttpServer(void)
     }
 }
 
+// Function to stop the server
 static void stopHttpServer(void)
 {
     if (httpServerInstance != NULL)
@@ -93,6 +138,7 @@ static void stopHttpServer(void)
     }
 }
 
+// Make a switch if a client joins we start the server and if it leaves we stop the server
 static esp_err_t wifiEventHandler(void *userParameter, system_event_t *event)
 {
     switch (event->event_id)
@@ -109,6 +155,7 @@ static esp_err_t wifiEventHandler(void *userParameter, system_event_t *event)
     return ESP_OK;
 }
 
+// Initisilizer method for the http server
 void http_controller_init()
 {
     ESP_ERROR_CHECK(nvs_flash_init());
