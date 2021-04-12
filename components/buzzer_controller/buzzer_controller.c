@@ -50,6 +50,11 @@ static volatile int FREQ = 3000;
 static volatile int OUTPUT_POINT_NUM = 0;    // The number of output wave points.
 static volatile int g_index = 0;
 
+
+int get_frequency(){
+    return FREQ;
+}
+
 static void calculate_output_point_num(){
     OUTPUT_POINT_NUM = (int)(1000000 / (TIMER_INTR_US * FREQ) + 0.5);
 }

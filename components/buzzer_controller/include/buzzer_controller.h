@@ -3,6 +3,7 @@
 
 void buzzer_init();
 void set_frequency(int frequency);
+int get_frequency();
 
 #endif // buzzer controller
 
