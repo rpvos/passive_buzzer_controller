@@ -110,6 +110,8 @@ static esp_err_t getHandler(httpd_req_t *httpRequest)
     return ESP_OK;
 }
 
+/// Below this all the code is from an example project
+
 // Struct that contains the info about the webpage
 static httpd_uri_t getUri = {
     .uri = URI_STRING,

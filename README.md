@@ -6,6 +6,8 @@ For this project are the following examples used:
 - esp-idf\examples\peripherals\wave_gen
 - esp-idf\examples\wifi\getting_started\softAP
 
+This project contains code that is from an example project, this code is defined between /// comments.
+
 ## How to use this project
 
 ### Hardware Required
@@ -51,38 +53,45 @@ Here at the bottom you can find the two components with all the possible setting
 #### WiFi SSID
 
 This is the place to set the name of the network acces point
-**Default BuzzerController**
+
+**Default: BuzzerController**
 
 #### WiFi Password
 
 This is the place to set the password of the network acces point.
 The passsword must be longer then 8 characters.
-**Default password**
+
+**Default: "password"**
 
 #### WiFi port
 
 Port used to communicate with the http server.
-**Default 3500**
+
+**Default: 3500**
 
 #### WiFi channel
 
 The wifi channel is on what frequency the WiFi is. 
-**Default channel 1**
+
+**Default channel: 1**
 
 #### Maximal STA connections
 
 The amount of clients that can connect to the network
-**Default 4**
+
+**Default: 4**
 
 #### Request header length
 
 Variable used to define how large the request headers can be in bytes
-**Default 512**
+
+**Default: 512**
 
 #### URI header length
 
 Variable used to define how large the uri headers can be in bytes
-**Default 512**
+
+**Default: 512**
 
 ### Buzzer controller
 

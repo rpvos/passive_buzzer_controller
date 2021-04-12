@@ -44,6 +44,7 @@ static volatile int frequency = 0;
 static volatile int OUTPUT_POINT_NUM = 0; // The number of output wave points.
 static volatile int g_index = 0;
 
+/// From here to the next /// all code is from an example project
 
 static void calculate_output_point_num()
 {
@@ -137,6 +138,8 @@ static void log_info(void)
     ESP_LOGI(TAG, "Frequency(Hz): %d", frequency);
     ESP_LOGI(TAG, "Output points num: %d\n", OUTPUT_POINT_NUM);
 }
+
+/// Here ends the code from an example project
 
 // Method used to set the frequency
 void set_frequency(int _frequency)
