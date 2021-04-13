@@ -1,5 +1,7 @@
 # Passive buzzer via http
 
+By: Rik Vos (rpvos)
+
 This project implements a http server where you can edit the tone of the passive buzzer.
 
 For this project is the following example used:
