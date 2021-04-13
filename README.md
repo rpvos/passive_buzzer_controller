@@ -56,7 +56,7 @@ This is the place to set the name of the network acces point
 #### WiFi Password
 
 This is the place to set the password of the network acces point.
-The passsword must be longer then 8 characters.
+The passsword must be longer then 8 characters or can be left blank to make it an open acces point.
 
 **Default: "password"**
 
