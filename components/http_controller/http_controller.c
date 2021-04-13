@@ -7,10 +7,10 @@
 #include "esp_wifi.h"
 #include "esp_system.h"
 #include "esp_event.h"
-#include "esp_event_loop.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "esp_http_server.h"
+#include "esp_netif.h"
 
 // Lowest hertz the buzzer can handle
 #define BASE_HERTZ 1000
@@ -50,27 +50,31 @@ static esp_err_t getHandler(httpd_req_t *httpRequest)
     ESP_LOGI(TAG, "Frequency setter webpage called");
 
     // Var where the extra headers are stored
-    char *uri = httpRequest->uri;
+    const char *uri = httpRequest->uri;
 
     // Variables how long the webpage components are
     int uri_length = strlen(URI_STRING);
     int base_header_length = strlen("?frequency=");
+    int total_length = uri_length+ base_header_length;
 
     // Header contains info on new frequency level
-    if (strlen(uri) > uri_length + base_header_length)
+    if (strlen(uri) > total_length)
     {
         // Calculate how many digits are there to read
-        int digit_length = strlen(uri) - base_header_length;
+        int digit_length = strlen(uri) - total_length;
         // Initiate the array to store them with space for a null byte
         char value[digit_length + 1];
         // Loop through all the digits
         for (int character = 0; character < digit_length; character++)
         {
-            value[character] = uri[base_header_length + character];
+            value[character] = uri[total_length + character];
         }
 
         // End the char array with \0 to make it a string
         value[digit_length] = '\0';
+
+        // Log the new frequency
+        ESP_LOGI(TAG, "New frequency: %s", value);
 
         // Use atoi to convert a string to a integer
         frequency = atoi(value);
@@ -88,18 +92,19 @@ static esp_err_t getHandler(httpd_req_t *httpRequest)
 
     // Respond to the request with a html page without the frequency
     char html[] = "<html><body> <form action=\"\" method=\"get\"> <input type=\"number\" id=\"frequency\" name=\"frequency\" value=\"%d\" /> <input type=\"submit\" value=\"Send\" /> </form></body></html>\r\n\r\n";
-    
-    // Count the amount of digits used in the html page, 
+
+    // Count the amount of digits used in the html page,
     // it is initiated at -2 because the %d is two characters that are already in this string
     int count = -2;
     int counter = frequency;
-    while (counter != 0) {
+    while (counter != 0)
+    {
         counter /= 10;
         count++;
     }
 
     // Initiate a buffer to put the html page in containing the frequency
-    char buffer[strlen(html) + 1+ count];
+    char buffer[strlen(html) + 1 + count];
     // Copy the html into the buffer with the %d swapped for the frequency
     sprintf(buffer, html, frequency);
 
@@ -162,9 +167,12 @@ void http_controller_init()
 {
     ESP_ERROR_CHECK(nvs_flash_init());
     tcpip_adapter_init();
+    // ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP));
     ESP_ERROR_CHECK(tcpip_adapter_dhcps_start(TCPIP_ADAPTER_IF_AP));
+
     ESP_ERROR_CHECK(esp_event_loop_init(wifiEventHandler, NULL));
+
     wifi_init_config_t wifiConfiguration = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&wifiConfiguration));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
