@@ -45,7 +45,7 @@ void set_frequency_callback(void (*cb)(int))
 }
 
 // Handler made to handle the following link ip:port/uri_string
-static esp_err_t getHandler(httpd_req_t *httpRequest)
+static esp_err_t frequencyPageHandler(httpd_req_t *httpRequest)
 {
     ESP_LOGI(TAG, "Frequency setter webpage called");
 
@@ -55,7 +55,7 @@ static esp_err_t getHandler(httpd_req_t *httpRequest)
     // Variables how long the webpage components are
     int uri_length = strlen(URI_STRING);
     int base_header_length = strlen("?frequency=");
-    int total_length = uri_length+ base_header_length;
+    int total_length = uri_length + base_header_length;
 
     // Header contains info on new frequency level
     if (strlen(uri) > total_length)
@@ -115,72 +115,107 @@ static esp_err_t getHandler(httpd_req_t *httpRequest)
     return ESP_OK;
 }
 
-/// Below this all the code is from an example project
-
-// Struct that contains the info about the webpage
-static httpd_uri_t getUri = {
+// Struct that contains the info about the getter for the webpage
+static httpd_uri_t frequency_uri = {
     .uri = URI_STRING,
     .method = HTTP_GET,
-    .handler = getHandler,
+    .handler = frequencyPageHandler,
     .user_ctx = NULL,
 };
 
-// Function to start the server
-static void startHttpServer(void)
+// Function to start the http server
+static void start_http_server(void)
 {
+    // Default config for the http server
     httpd_config_t httpServerConfiguration = HTTPD_DEFAULT_CONFIG();
+    // Use the assigned port from settings
     httpServerConfiguration.server_port = SERVER_PORT;
+
+    // Start the server and check if it was completed
     if (httpd_start(&httpServerInstance, &httpServerConfiguration) == ESP_OK)
     {
-        ESP_ERROR_CHECK(httpd_register_uri_handler(httpServerInstance, &getUri));
+        // Register the frequency page in the http server
+        ESP_ERROR_CHECK(httpd_register_uri_handler(httpServerInstance, &frequency_uri));
     }
 }
 
-// Function to stop the server
-static void stopHttpServer(void)
+// Function to stop the http server
+static void stop_http_server(void)
 {
+    // If the server is existend
     if (httpServerInstance != NULL)
     {
+        // Stop the server
         ESP_ERROR_CHECK(httpd_stop(httpServerInstance));
     }
 }
 
-// Make a switch if a client joins we start the server and if it leaves we stop the server
-static esp_err_t wifiEventHandler(void *userParameter, system_event_t *event)
+// If a client joins we start the http server and if it leaves we stop the server
+static void wifi_event_handler(void *arg, esp_event_base_t event_base,
+                               int32_t event_id, void *event_data)
 {
-    switch (event->event_id)
+    // In the event of a client joining
+    if (event_id == WIFI_EVENT_AP_STACONNECTED)
     {
-    case SYSTEM_EVENT_AP_STACONNECTED:
-        startHttpServer();
-        break;
-    case SYSTEM_EVENT_AP_STADISCONNECTED:
-        stopHttpServer();
-        break;
-    default:
-        break;
+        // Get the event data and display it in the log
+        wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *)event_data;
+        ESP_LOGI(TAG, "Mac address: " MACSTR " joined, AID=%d", MAC2STR(event->mac), event->aid);
+
+        // Start the http server
+        start_http_server();
     }
-    return ESP_OK;
+    // In the event of a client disconnecting
+    else if (event_id == WIFI_EVENT_AP_STADISCONNECTED)
+    {
+        // Get the event data and display it in the log
+        wifi_event_ap_stadisconnected_t *event = (wifi_event_ap_stadisconnected_t *)event_data;
+        ESP_LOGI(TAG, "Mac address: " MACSTR " left, AID=%d", MAC2STR(event->mac), event->aid);
+
+        // Stop the http server
+        stop_http_server();
+    }
 }
 
-// Initisilizer method for the http server
+// Initializer method for the http server
 void http_controller_init()
 {
-    ESP_ERROR_CHECK(nvs_flash_init());
-    tcpip_adapter_init();
-    // ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP));
-    ESP_ERROR_CHECK(tcpip_adapter_dhcps_start(TCPIP_ADAPTER_IF_AP));
+    // Make sure nvs is initialized
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
 
-    ESP_ERROR_CHECK(esp_event_loop_init(wifiEventHandler, NULL));
+    // Initialize the network stack
+    ESP_ERROR_CHECK(esp_netif_init());
 
+    // Create a loop for handling connection request
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    // Default wifi acces point
+    esp_netif_create_default_wifi_ap();
+
+    // Default wifi config
     wifi_init_config_t wifiConfiguration = WIFI_INIT_CONFIG_DEFAULT();
+
+    // Set the wifi config
     ESP_ERROR_CHECK(esp_wifi_init(&wifiConfiguration));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
-    wifi_config_t apConfiguration = {
+
+    // Regester the event handler for joining and leaving clients
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
+                                                        ESP_EVENT_ANY_ID,
+                                                        &wifi_event_handler,
+                                                        NULL,
+                                                        NULL));
+
+    // Create the wifi config using the settings
+    wifi_config_t wifi_config = {
         .ap = {
             .ssid = ESP_WIFI_SSID,
             .password = ESP_WIFI_PASS,
-            .ssid_len = 0,
+            .ssid_len = strlen(ESP_WIFI_SSID),
             .channel = ESP_WIFI_CHANNEL,
             .authmode = WIFI_AUTH_WPA2_PSK,
             .ssid_hidden = 0,
@@ -188,7 +223,22 @@ void http_controller_init()
             .beacon_interval = 150,
         },
     };
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &apConfiguration));
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+
+    // If the password is empty the acces point is open
+    if (strlen(ESP_WIFI_PASS) == 0)
+    {
+        wifi_config.ap.authmode = WIFI_AUTH_OPEN;
+    }
+
+    // Set the mode to acces point
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+
+    // Set the config
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
+
+    // Start the wifi acces point
     ESP_ERROR_CHECK(esp_wifi_start());
+
+    // Log that the acces point is online
+    ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s", ESP_WIFI_SSID, ESP_WIFI_PASS);
 }

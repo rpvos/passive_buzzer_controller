@@ -2,11 +2,8 @@
 
 This project implements a http server where you can edit the tone of the passive buzzer.
 
-For this project are the following examples used:
+For this project is the following example used:
 - esp-idf\examples\peripherals\wave_gen
-- esp-idf\examples\wifi\getting_started\softAP
-
-This project contains code that is from an example project, this code is defined between /// comments.
 
 ## How to use this project
 
